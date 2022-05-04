@@ -4,3 +4,5 @@
 /Lib/
 /Scripts/
 /engine/variables.py
+/.idea/
+/pyvenv.cfg
