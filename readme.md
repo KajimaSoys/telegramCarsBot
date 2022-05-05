@@ -39,5 +39,5 @@ command = /home/{user}/telegramApp/env/bin/python /home/{user}/telegramApp/teleg
 environment = PATH="/home/{user}/telegramApp/env/bin"\
 directory= /home/{user}/telegramApp/telegramCarsBot/engine
 
-systemctl restart supervisor
+systemctl restart supervisor\
 supervisorctl start telegramApp
