@@ -27,6 +27,8 @@ ALTER USER postgres PASSWORD '<new_pass_for_postgres>';\
 cd /home/{user}/telegramApp/telegramCarsBot\
 pg_restore -d cars_bot cars_bot.sql
 
+su -l root
+
 nano /etc/supervisor/conf.d/telegramApp.conf\
 put in:\
 [program:telegramApp]\
