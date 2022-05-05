@@ -3,8 +3,7 @@
 
 ###Quick start for Debian 10:
 apt-get update\
-apt install python3\
-apt install python3-pip python3-venv\
+apt install python3 python3-pip python3-venv\
 apt install postgresql postgresql-contrib\
 apt install git\
 apt install supervisor
@@ -26,15 +25,7 @@ ALTER USER postgres PASSWORD '<new_pass_for_postgres>';\
 \q
 
 cd /home/{user}/telegramApp/telegramCarsBot\
-pg_restore -d cars_bot cars_bot.sql\
-psql -U postgres --password\
-
-create extension pg_trgm;\
-CREATE INDEX autoru_trgm_idx ON autoru USING GIN (search_string gin_trgm_ops);\
-CREATE INDEX avito_trgm_idx ON avito USING GIN (search_string gin_trgm_ops);
-CREATE TABLE words AS SELECT word\
-FROM ts_stat('SELECT to_tsvector(''simple'', search_string) FROM autoru');\
-CREATE INDEX words_idx ON words USING GIN (word gin_trgm_ops);
+pg_restore -d cars_bot cars_bot.sql
 
 nano /etc/supervisor/conf.d/telegramApp.conf\
 put in:\
