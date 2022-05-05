@@ -3,7 +3,6 @@ from typing import Dict, List, Tuple
 import variables
 
 conn = psycopg2.connect(
-    host="localhost",
     database="cars_bot",
     user="postgres",
     password=variables.password)

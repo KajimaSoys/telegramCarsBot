@@ -2,35 +2,23 @@ import logging
 
 #Импорт самого бота
 from aiogram import Bot, Dispatcher, executor, types
-
-from aiogram.utils.callback_data import CallbackData
-from telegram_bot_pagination import InlineKeyboardPaginator
-from aiogram.types import ReplyKeyboardRemove, \
-    ReplyKeyboardMarkup, KeyboardButton, \
-    InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.types.input_media import InputMedia
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 #Импорт утилит для работы с текстом
-from aiogram.utils.markdown import text
 import keyboards as kb
 
 import ast
+import db
+import variables
 from server_utils import States
 from messages import MESSAGES
 from utils import fetch_results, get_text, get_img
 from statistics import mean
 
-import db
-import variables
-
-
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 logging.basicConfig(level=logging.DEBUG)
-
 API_TOKEN = variables.api_token
-
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -99,7 +87,6 @@ async def authorization_decline(message: types.Message):
     else:
         await message.reply('У вас недостаточно прав!', reply=False)
 
-
 @dp.message_handler(state='*', commands=['register'])
 async def user_register(message: types.Message):
     argument = message.get_args()
@@ -118,7 +105,6 @@ async def user_register(message: types.Message):
         await message.reply('Введен неверный код', reply=False)
 
 
-
 @dp.message_handler(state=States.START_STATE, commands=['offer']) #, commands=['help']
 async def send_offer(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -127,14 +113,12 @@ async def send_offer(message: types.Message):
     text = MESSAGES['offer']
     await message.reply(text, reply=False, reply_markup=kb.offer_kb)
 
-
 @dp.callback_query_handler(lambda c: c.data == 'offer', state=States.START_STATE)
 async def process_callback_offer(call: types.CallbackQuery):
     state = dp.current_state(user=call.from_user.id)
     await state.set_state(States.OFFER_STATE[0])
     await call.message.answer(MESSAGES['offer'], reply_markup=kb.offer_kb)
     await call.answer()
-
 
 @dp.message_handler(state=States.OFFER_STATE, content_types=['photo', 'text'])
 async def capture_offer(message: types.Message):
@@ -147,7 +131,6 @@ async def capture_offer(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.START_STATE[0])
     await message.reply('Спасибо за заявку! С Вами свяжется специалист.', reply=False, reply_markup=kb.greet_kb)
-
 
 
 @dp.message_handler(state=States.START_STATE, commands=['compare']) #, commands=['help']
@@ -183,7 +166,6 @@ async def capture_compare(message: types.Message):
         await message.reply(text, reply=False, reply_markup=kb.find_kb)
 
 
-
 @dp.message_handler(state=States.START_STATE, commands=['find']) #, commands=['help']
 async def send_find(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -198,38 +180,6 @@ async def process_callback_find(call: types.CallbackQuery):
     await state.set_state(States.FIND_STATE[0])
     await call.message.answer(MESSAGES['find'], reply_markup=kb.find_kb)
     await call.answer()
-
-
-posts_callback = CallbackData("Posts", "page")
-
-def get_posts_keyboard(page: int, count: int) -> InlineKeyboardMarkup:
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    has_next_page = count > page + 1
-
-    if page !=0:
-        keyboard.add(
-            InlineKeyboardButton(
-                text="< Назад",
-                callback_data=posts_callback.new(page=page - 1)
-            )
-        )
-
-    keyboard.add(
-        InlineKeyboardButton(
-            text=f"• {page + 1} •",
-            callback_data="dont_click_me"
-        )
-    )
-
-    if has_next_page:
-        keyboard.add(
-            InlineKeyboardButton(
-                text="Вперёд >",
-                callback_data=posts_callback.new(page=page + 1)
-            )
-        )
-
-    return keyboard
 
 @dp.message_handler(state=States.FIND_STATE)
 async def capture_find(message: types.Message):
@@ -264,7 +214,7 @@ async def capture_find(message: types.Message):
             'request': str(posts)
         })
 
-        post_keyboard = get_posts_keyboard(0, len(posts))
+        post_keyboard = kb.get_posts_keyboard(0, len(posts))
 
         post_data_len = len(post_data)-1
         for index, post in enumerate(post_data):
@@ -283,21 +233,15 @@ async def capture_find(message: types.Message):
                 )
 
 
-@dp.callback_query_handler(posts_callback.filter(), state='*')
+@dp.callback_query_handler(kb.posts_callback.filter(), state='*')
 async def post_page_handler(query: types.CallbackQuery, callback_data: dict):
     page = int(callback_data.get("page"))
 
     posts = ast.literal_eval(db.select_request(str(query.from_user.id)))
 
     post_data = posts[page]
-    keyboard = get_posts_keyboard(page, len(posts))
+    keyboard = kb.get_posts_keyboard(page, len(posts))
 
-    # photo = InputMedia(
-    #     type="photo",
-    #     media=post_data.get("image_url"),
-    #     caption=post_data.get("display_name")
-    # )
-    # await query.message.edit_media(photo, keyboard)
     post_data_len = len(post_data) - 1
     for index, post in enumerate(post_data):
         if index == post_data_len:
@@ -313,8 +257,6 @@ async def post_page_handler(query: types.CallbackQuery, callback_data: dict):
                 photo=post.get("image_url"),
                 caption=post.get("display_name"),
             )
-
-
 
 
 @dp.message_handler(state=States.all(), commands=['help'])
@@ -335,7 +277,6 @@ async def process_callback_help(call: types.CallbackQuery):
     await call.answer()
 
 
-
 @dp.message_handler()
 async def echo_message(msg: types.Message):
     await bot.send_message(msg.from_user.id, msg.text)
@@ -343,6 +284,7 @@ async def echo_message(msg: types.Message):
 async def shutdown(dispatcher: Dispatcher):
     await dispatcher.storage.close()
     await dispatcher.storage.wait_closed()
+
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)
