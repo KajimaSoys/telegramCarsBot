@@ -1,5 +1,5 @@
 username = 'lum-customer-hl_79a92981-zone-static'
-password = '12345'
+password = 'f9ad1zb48xxp'
 port = 22225
 
 db_password = '12345'

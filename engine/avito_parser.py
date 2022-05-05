@@ -387,8 +387,8 @@ def main():
     # asyncio.run(gather_links())
     if get_marks():
         print('Successful parsing')
-        db.delete_dupes(table='avito', column='sale_id')
-        db.reindex()
+    db.delete_dupes(table='avito', column='sale_id')
+    db.reindex()
 
 if __name__ == '__main__':
     main()

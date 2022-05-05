@@ -193,7 +193,6 @@ async def capture_find(message: types.Message):
         posts_part = []
         for item in results:
             temp_dict = {}
-            temp_dict['slug'] = item['mark_info']
             temp_dict['display_name'] = get_text(item)
             temp_dict['image_url'] = get_img(item)
             if (results.index(item) + 1) % 10 == 0:
@@ -277,7 +276,7 @@ async def process_callback_help(call: types.CallbackQuery):
     await call.answer()
 
 
-@dp.message_handler()
+@dp.message_handler(state=States.START_STATE)
 async def echo_message(msg: types.Message):
     await bot.send_message(msg.from_user.id, msg.text)
 

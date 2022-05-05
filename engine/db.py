@@ -5,7 +5,7 @@ import variables
 conn = psycopg2.connect(
     database="cars_bot",
     user="postgres",
-    password=variables.password)
+    password=variables.db_password)
 
 cursor = conn.cursor()
 

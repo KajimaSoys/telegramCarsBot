@@ -136,21 +136,6 @@ def parsing() -> Parsed_post:
         # Параметры запроса
         print(f'Current page is {pages}')
 
-        # response = get_response(pages)
-        # while True:
-        #     try:
-        #         response = get_response(pages)
-        #     except Exception:
-        #         print(f'Error occured at page: {pages}')
-        #     else:
-        #         break
-        # response = False
-        # while not response:
-
-
-
-        # with open ('test.html', 'w') as file:
-        #     file.write(response.text)
         try:
             data = get_response(pages)
         except:
@@ -421,8 +406,8 @@ def parsing() -> Parsed_post:
 def main():
     if parsing():
         print('Successful parsing')
-        db.delete_dupes(table='autoru', column='sale_id')
-        db.reindex()
+    db.delete_dupes(table='autoru', column='sale_id')
+    db.reindex()
 
 if __name__ == '__main__':
     main()
