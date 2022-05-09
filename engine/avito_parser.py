@@ -368,9 +368,6 @@ def get_marks():
         links.append(temp['href'])
 
     for link in links:
-        # if links.index(link) in [0,1,2]:
-        #     continue
-
         pages = find_pages(link)
         for page in range(pages):
             get_data(link, page+1)
@@ -385,8 +382,11 @@ current_posts = db.handle_all('avito', 'sale_id')
 def main():
 
     # asyncio.run(gather_links())
-    if get_marks():
-        print('Successful parsing')
+    try:
+        if get_marks():
+            print('Successful parsing')
+    except KeyboardInterrupt:
+        pass
     db.delete_dupes(table='avito', column='sale_id')
     db.reindex()
 

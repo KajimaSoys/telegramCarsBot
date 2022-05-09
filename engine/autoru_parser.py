@@ -138,10 +138,13 @@ def parsing() -> Parsed_post:
 
         try:
             data = get_response(pages)
+        except KeyboardInterrupt:
+            break
         except:
             print(f'Не удалось спарсить страницу №{pages}')
             pages += 1
             continue
+
         # with open('parse2.json', 'w', encoding='UTF-8') as file:
         #     file.write(str(data))
 

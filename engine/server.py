@@ -13,7 +13,7 @@ import db
 import variables
 from server_utils import States
 from messages import MESSAGES
-from utils import fetch_results, get_text, get_img
+from utils import fetch_results, get_text, get_img, compare
 from statistics import mean
 
 
@@ -41,6 +41,12 @@ async def process_callback_start(call: types.CallbackQuery):
     await state.set_state(States.START_STATE[0])
     await call.message.answer(MESSAGES['start'], reply_markup=kb.greet_kb)
     await call.answer()
+
+@dp.message_handler(regexp='^ок$', state=States.all())#state=States.START_STATE)
+async def echo_message(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    await state.set_state(States.START_STATE[0])
+    await bot.send_message(message.from_user.id, 'Что делаем дальше?', reply_markup=kb.greet_kb)
 
 
 @dp.message_handler(state='*', commands=['accept'])
@@ -93,9 +99,12 @@ async def user_register(message: types.Message):
     if argument == variables.register:
         admins = db.handle_staff('users', 'is_admin')
         for admin in admins:
-            print(admin)
+            if message.from_user.username == 'None':
+                user = f'{message.from_user.id}'
+            else:
+                user = f'@{message.from_user.username}\n{message.from_user.id}'
             text = f'Поступила заявка на авторизацию в системе от пользователя\n' \
-                   f'@{message.from_user.username}\n{message.from_user.id}!\n' \
+                   f'{user}\n' \
                    f'Введите /accept {message.from_user.id} чтобы принять.\n' \
                    f'Введите /decline {message.from_user.id} чтобы отклонить.'
             await bot.send_message(admin[0], text)
@@ -123,11 +132,15 @@ async def process_callback_offer(call: types.CallbackQuery):
 @dp.message_handler(state=States.OFFER_STATE, content_types=['photo', 'text'])
 async def capture_offer(message: types.Message):
     managers = db.handle_staff('users', 'is_manager')
+    if message.from_user.username == 'None':
+        user = f'{message.from_user.id}'
+    else:
+        user = f'@{message.from_user.username} {message.from_user.id}'
     for manager in managers:
         if message.photo:
-            await bot.send_photo(manager[0], message.photo[0]['file_id'], caption=f'Поступила заявка от пользователя @{message.from_user.username}!\n{message.caption}')
+            await bot.send_photo(manager[0], message.photo[0]['file_id'], caption=f'Поступила заявка от пользователя {user}\n\n{message.caption}')
         else:
-            await bot.send_message(manager[0], f'Поступила заявка от пользователя @{message.from_user.username}!\n{message.text}')
+            await bot.send_message(manager[0], f'Поступила заявка от пользователя {user}\n\n{message.text}')
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.START_STATE[0])
     await message.reply('Спасибо за заявку! С Вами свяжется специалист.', reply=False, reply_markup=kb.greet_kb)
@@ -150,16 +163,16 @@ async def process_callback_compare(call: types.CallbackQuery):
 
 @dp.message_handler(state=States.COMPARE_STATE)
 async def capture_compare(message: types.Message):
-    results, count, count_message = fetch_results(message.text)
+    results, count = compare(message.text)
     if count == 0:
-        await message.reply('По Вашему запросу ничего не найдено, попробуйте изменить запрос', reply=False, reply_markup=kb.find_kb)
+        await message.reply('По Вашему запросу ничего не найдено, попробуйте изменить или уточнить запрос', reply=False, reply_markup=kb.find_kb)
     else:
         prices = []
         for result in results:
             prices.append(result['price_rub'])
         min_price = min(prices)
         max_price = max(prices)
-        mean_price = mean(prices)
+        mean_price = round(mean(prices), 2)
         text = f'Минимальная цена: {min_price} руб.\n' \
                f'Максимальаня цена: {max_price} руб.\n' \
                f'Средняя цена: {mean_price} руб.'
@@ -217,19 +230,33 @@ async def capture_find(message: types.Message):
 
         post_data_len = len(post_data)-1
         for index, post in enumerate(post_data):
-            if index == post_data_len:
-                await bot.send_photo(
-                    chat_id=message.chat.id,
-                    photo=post.get("image_url"),
-                    caption=post.get("display_name"),
-                    reply_markup=post_keyboard
-                )
+            if post.get("image_url") == 'No img.jpg':
+                if index == post_data_len:
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=post.get("display_name"),
+                        reply_markup=post_keyboard
+                    )
+                else:
+                    await bot.send_message(
+                        chat_id=message.chat.id,
+                        text=post.get("display_name"),
+                    )
             else:
-                await bot.send_photo(
-                    chat_id=message.chat.id,
-                    photo=post.get("image_url"),
-                    caption=post.get("display_name"),
-                )
+                if index == post_data_len:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=post.get("image_url"),
+                        caption=post.get("display_name"),
+                        reply_markup=post_keyboard
+                    )
+                else:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=post.get("image_url"),
+                        caption=post.get("display_name"),
+                    )
+
 
 
 @dp.callback_query_handler(kb.posts_callback.filter(), state='*')
@@ -243,19 +270,33 @@ async def post_page_handler(query: types.CallbackQuery, callback_data: dict):
 
     post_data_len = len(post_data) - 1
     for index, post in enumerate(post_data):
-        if index == post_data_len:
-            await bot.send_photo(
-                chat_id=query.message.chat.id,
-                photo=post.get("image_url"),
-                caption=post.get("display_name"),
-                reply_markup=keyboard
-            )
+        if not post.get("image_url") == 'No img.jpg':
+            if index == post_data_len:
+                await bot.send_message(
+                    chat_id=query.message.chat.id,
+                    text=post.get("display_name"),
+                    reply_markup=keyboard
+                )
+            else:
+                await bot.send_message(
+                    chat_id=query.message.chat.id,
+                    text=post.get("display_name"),
+                )
         else:
-            await bot.send_photo(
-                chat_id=query.message.chat.id,
-                photo=post.get("image_url"),
-                caption=post.get("display_name"),
-            )
+            if index == post_data_len:
+                await bot.send_photo(
+                    chat_id=query.message.chat.id,
+                    photo=post.get("image_url"),
+                    caption=post.get("display_name"),
+                    reply_markup=keyboard
+                )
+            else:
+                await bot.send_photo(
+                    chat_id=query.message.chat.id,
+                    photo=post.get("image_url"),
+                    caption=post.get("display_name"),
+                )
+
 
 
 @dp.message_handler(state=States.all(), commands=['help'])
@@ -275,10 +316,6 @@ async def process_callback_help(call: types.CallbackQuery):
     await call.message.answer(text, reply_markup=kb.help_kb)
     await call.answer()
 
-
-@dp.message_handler(state=States.START_STATE)
-async def echo_message(msg: types.Message):
-    await bot.send_message(msg.from_user.id, msg.text)
 
 async def shutdown(dispatcher: Dispatcher):
     await dispatcher.storage.close()

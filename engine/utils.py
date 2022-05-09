@@ -60,8 +60,8 @@ def add_row(table, post):# -> Autoru_row:
     return True
 
 def fetch_results(search_str):# -> Autoru_row:
-    posts_autoru, count_autoru = db.select('autoru', search_str, 'mark_info model_info tech_human_name link_post link_img mileage region price_rub is_official year owners_number color_text'.split())
-    posts_avito, count_avito = db.select('avito', search_str, 'mark_info model_info tech_human_name link_post link_img mileage region price_rub year'.split())
+    posts_autoru, count_autoru = db.select_find('autoru', search_str, 'mark_info model_info tech_human_name link_post link_img mileage region price_rub is_official year owners_number color_text'.split())
+    posts_avito, count_avito = db.select_find('avito', search_str, 'mark_info model_info tech_human_name link_post link_img mileage region price_rub year'.split())
     count = count_avito + count_autoru
     posts = posts_avito + posts_autoru
     posts = sorted(posts, key=lambda d: d['sml'], reverse=True)
@@ -72,6 +72,15 @@ def fetch_results(search_str):# -> Autoru_row:
     else:
         count_message = f'Найдено {str(count)} объявлений.'
     return posts, count, count_message
+
+
+def compare(search_str):# -> Autoru_row:
+    posts_autoru, count_autoru = db.select_compare('autoru', search_str, ['price_rub'])
+    posts_avito, count_avito = db.select_compare('avito', search_str, ['price_rub'])
+    count = count_avito + count_autoru
+    posts = posts_avito + posts_autoru
+    posts = sorted(posts, key=lambda d: d['sml'], reverse=True)
+    return posts, count
 
 
 def get_text(item):
