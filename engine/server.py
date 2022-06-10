@@ -8,12 +8,13 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 #Импорт утилит для работы с текстом
 import keyboards as kb
 
+from aiogram.types import ParseMode
 import ast
 import db
 import variables
 from server_utils import States
 from messages import MESSAGES
-from utils import fetch_results, get_text, get_img, compare
+from utils import fetch_results, get_text, get_img, compare, save_stat
 from statistics import mean
 
 
@@ -33,20 +34,20 @@ async def send_welcome(message: types.Message):
                             'is_manager': False, 'wait_confirm': False})
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.START_STATE[0])
-    await message.reply(MESSAGES['start'], reply=False, reply_markup=kb.greet_kb)
+    await message.reply(MESSAGES['start'], reply=False, reply_markup=kb.greet_kb(message.from_user.id))
 
 @dp.callback_query_handler(lambda c: c.data == 'start', state=States.all())
 async def process_callback_start(call: types.CallbackQuery):
     state = dp.current_state(user=call.from_user.id)
     await state.set_state(States.START_STATE[0])
-    await call.message.answer(MESSAGES['start'], reply_markup=kb.greet_kb)
+    await call.message.answer(MESSAGES['start'], reply_markup=kb.greet_kb(message.from_user.id))
     await call.answer()
 
 @dp.message_handler(regexp='^ок$', state=States.all())#state=States.START_STATE)
 async def echo_message(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.START_STATE[0])
-    await bot.send_message(message.from_user.id, 'Что делаем дальше?', reply_markup=kb.greet_kb)
+    await bot.send_message(message.from_user.id, 'Что делаем дальше?', reply_markup=kb.greet_kb(message.from_user.id))
 
 
 @dp.message_handler(state='*', commands=['accept'])
@@ -114,6 +115,16 @@ async def user_register(message: types.Message):
         await message.reply('Введен неверный код', reply=False)
 
 
+@dp.message_handler(state=States.START_STATE, commands=['stat'])
+async def send_stat(message: types.Message):
+    text = MESSAGES['stat']
+    await message.reply(text, reply=False, reply_markup=kb.greet_kb(message.from_user.id))
+
+@dp.callback_query_handler(lambda c: c.data == 'stat', state=States.START_STATE)
+async def process_callback_stat(call: types.CallbackQuery):
+    await call.message.answer(MESSAGES['stat'], reply_markup=kb.greet_kb(call.from_user.id))
+    await call.answer()
+
 @dp.message_handler(state=States.START_STATE, commands=['offer']) #, commands=['help']
 async def send_offer(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -138,12 +149,12 @@ async def capture_offer(message: types.Message):
         user = f'@{message.from_user.username} {message.from_user.id}'
     for manager in managers:
         if message.photo:
-            await bot.send_photo(manager[0], message.photo[0]['file_id'], caption=f'Поступила заявка от пользователя {user}\n\n{message.caption}')
+            await bot.send_photo(manager[0], message.photo[0]['file_id'], caption=f'Поступила заявка от [пользователя](tg://user?id={message.from_user.id})\n\n{message.caption}', parse_mode=ParseMode.MARKDOWN)
         else:
-            await bot.send_message(manager[0], f'Поступила заявка от пользователя {user}\n\n{message.text}')
+            await bot.send_message(manager[0], f'Поступила заявка от [пользователя](tg://user?id={message.from_user.id})\n\n{message.text}', parse_mode=ParseMode.MARKDOWN)
     state = dp.current_state(user=message.from_user.id)
     await state.set_state(States.START_STATE[0])
-    await message.reply('Спасибо за заявку! С Вами свяжется специалист.', reply=False, reply_markup=kb.greet_kb)
+    await message.reply('Спасибо за заявку! С Вами свяжется специалист.', reply=False, reply_markup=kb.greet_kb(message.from_user.id))
 
 
 @dp.message_handler(state=States.START_STATE, commands=['compare']) #, commands=['help']
@@ -204,6 +215,7 @@ async def capture_find(message: types.Message):
     else:
         posts = []
         posts_part = []
+        save_stat(results[0])
         for item in results:
             temp_dict = {}
             temp_dict['display_name'] = get_text(item)
@@ -225,6 +237,7 @@ async def capture_find(message: types.Message):
             'user_id': str(message.from_user.id),
             'request': str(posts)
         })
+
 
         post_keyboard = kb.get_posts_keyboard(0, len(posts))
 

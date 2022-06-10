@@ -165,6 +165,31 @@ def reindex():
     print('Перестроение завершено. Таблица пригодна для поиска.')
 
 
+def update_stat_table(mark, model):
+    cursor.execute(f"""
+        SELECT count FROM statistics
+        WHERE mark_info='{mark}' AND model_info='{model}'
+        LIMIT 1;
+        """)
+    if cursor.rowcount == 0:
+        insert('statistics', {'mark_info': mark, 'model_info': model, 'count': 1})
+    else:
+        result = cursor.fetchall()
+        cursor.execute(f"""
+                UPDATE statistics
+                SET count={result[0][0]+1}
+                WHERE mark_info='{mark}' AND model_info='{model}';
+                """)
+        conn.commit()
+
+def get_stat():
+    cursor.execute("""
+        SELECT mark_info, model_info, count FROM statistics
+        ORDER BY count DESC;
+        """)
+    result = cursor.fetchall()
+    return result
+
 def select_request(user: str):
     cursor.execute(f"""
         SELECT request FROM requests

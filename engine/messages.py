@@ -1,5 +1,5 @@
 from server_utils import States
-
+import db
 current_state_message = 'Текущее состояние - "{current_state}", что удовлетворяет условию "один из {states}"'
 help_message = 'Нужна помощь?... Сейчас она всем нужна :)'
 start_message = 'Скажите, что Вас интересует?'# + help_message
@@ -15,6 +15,12 @@ searching_message = 'Так, нашел вот это.. То?'
 compare_message = 'Введите данные о машине, я найду диапозон цен среди похожих машин\n' \
                   'Формат [Марка Модель Год] подойдет для поиска лучше всего'
 
+def stat():
+    message = 'Пользователи искали следующие автомобили:'
+    for item in db.get_stat():
+        message = message + f'\n · {item[0]} {item[1]}: {item[2]}'
+    return message
+
 MESSAGES = {
     'start': start_message,
     'help' : help_message,
@@ -23,5 +29,6 @@ MESSAGES = {
     'searching': searching_message,
     'offer': offer_message,
     'compare': compare_message,
+    'stat': stat(),
 }
 

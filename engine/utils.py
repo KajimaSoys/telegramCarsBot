@@ -82,6 +82,10 @@ def compare(search_str):# -> Autoru_row:
     posts = sorted(posts, key=lambda d: d['sml'], reverse=True)
     return posts, count
 
+def save_stat(post):
+    mark = post['mark_info']
+    model = post['model_info']
+    db.update_stat_table(mark, model)
 
 def get_text(item):
     if item['db'] == 'autoru':
