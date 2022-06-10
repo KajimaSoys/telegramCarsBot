@@ -40,7 +40,7 @@ async def send_welcome(message: types.Message):
 async def process_callback_start(call: types.CallbackQuery):
     state = dp.current_state(user=call.from_user.id)
     await state.set_state(States.START_STATE[0])
-    await call.message.answer(MESSAGES['start'], reply_markup=kb.greet_kb(message.from_user.id))
+    await call.message.answer(MESSAGES['start'], reply_markup=kb.greet_kb(call.from_user.id))
     await call.answer()
 
 @dp.message_handler(regexp='^ок$', state=States.all())#state=States.START_STATE)
