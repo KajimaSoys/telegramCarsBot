@@ -138,271 +138,276 @@ def parsing() -> Parsed_post:
 
         try:
             data = get_response(pages)
+
+            i = 0  # Переменная для перехода по объявлениям
+            while i <= len(data) - 1:  # len(data)-1 это количество пришедших объявлений
+                search_sting = ''
+
+                # Доступность объявления
+                try:
+                    availability = str(data[i]['availability'])
+                except:
+                    availability = 'Not availability'
+
+                # Категория автомобиля
+                try:
+                    category = str(data[i]['category'])
+                except:
+                    category = 'Not category'
+
+                # Цвет автомобиля
+                try:
+                    color_hex = str(data[i]["color_hex"])
+                    color_rgb = tuple(int(color_hex[i:i + 2], 16) for i in (0, 2, 4))
+                    color_text = get_colour_name(color_rgb)
+                    try:
+                        color_text = colors_list[color_text]
+                        search_sting += color_text
+                    except:
+                        pass
+                except:
+                    color_hex = 'Not color'
+
+                # Описание автомобиля
+                # try:
+                #     description = str(data[i]['description'])
+                # except:
+                #     description = 'Not description'
+
+                # Растаможен ли автомобиль (возвращает True или False)
+                try:
+                    custom_cleared = bool(data[i]['documents']['custom_cleared'])
+                except:
+                    custom_cleared = False
+
+                # Лицензия на автомобиль
+                try:
+                    license_plate = str(data[i]['documents']['license_plate'])
+                except:
+                    license_plate = 'Not license plate '
+
+                # Колличество владельцев автомобиля
+                try:
+                    owners_number = int(data[i]['documents']['owners_number'])
+                except:
+                    owners_number = 0
+
+                # PTS автомобиля
+                try:
+                    pts = str(data[i]['documents']['pts'])
+                except:
+                    pts = 'Not PTS'
+
+                # VIN автомобиля
+                try:
+                    vin = str(data[i]['documents']['vin'])
+                except:
+                    vin = 'Not VIN'
+
+                try:
+                    vin_resolution = str(data[i]['documents']['vin_resolution'])
+                except:
+                    vin_resolution = 'Not vin resolution '
+
+                # Год выпуска автомобиля
+                try:
+                    year = int(data[i]['documents']['year'])
+                    search_sting += f' {str(year)}'
+                except:
+                    year = 0
+
+                # Цена в рублях, евро и долларах
+                try:
+                    price_rub = int(data[i]['price_info']['RUR'])
+                except:
+                    price_rub = 0
+
+                try:
+                    price_eur = int(data[i]['price_info']['EUR'])
+                except:
+                    price_eur = 0
+
+                try:
+                    price_usd = int(data[i]['price_info']['USD'])
+                except:
+                    price_usd = 0
+
+                # С салона ли машина или нет
+                try:
+                    is_official = bool(data[i]['salon']['is_official'])
+                    if is_official:
+                        search_sting += ' с салона'
+                except:
+                    is_official = False
+
+                # Координаты места нахождения машины (возвращается долгота и широта)
+                try:
+                    seller_latitude = float(data[i]['seller']['location']['coord']['latitude'])
+                    seller_longitude = float(data[i]['seller']['location']['coord']['longitude'])
+                except:
+                    seller_latitude = 0
+                    seller_longitude = 0
+
+                # Регион, в котором находится автомобиль
+                try:
+                    region = str(data[i]['seller']['location']['region_info']['name'])
+                    search_sting += f' {region}'
+                except:
+                    region = 'Not region'
+
+                # Временная зона в которой находится автомобиль
+                try:
+                    timezone = str(data[i]['seller']['location']['timezone_info']['abbr'])
+                except:
+                    timezone = 'Not timezone'
+
+                # Пробег автомобиля
+                try:
+                    mileage = int(data[i]['state']['mileage'])
+                except:
+                    mileage = 0
+
+                # Картинки автомобиля
+                # Возвращается несколько фото, мы их добавляем в словарь img_url
+                img_url = []
+                for img in data[i]['state']['image_urls']:
+                    img_url.append(img['sizes']['1200x900'])
+                link_img = str(img_url)
+
+                # Тип автомобиля
+                try:
+                    body_type = str(data[i]['vehicle_info']['configuration']['body_type'])
+                except:
+                    body_type = 'Not body_type auto'
+
+                # Количество дверей у автомобиля
+                try:
+                    doors_count = int(data[i]['vehicle_info']['configuration']['doors_count'])
+                except:
+                    doors_count = 0
+
+                # Класс автомобиля
+                try:
+                    auto_class = str(data[i]['vehicle_info']['configuration']['auto_class'])
+                except:
+                    auto_class = 'Not class auto'
+
+                # Название автомобиля
+                try:
+                    conf_human_name = str(data[i]['vehicle_info']['configuration']['human_name'])
+                    search_sting += f' {conf_human_name}'
+                except:
+                    conf_human_name = 'Not name auto'
+
+                # Объем багажника автомобиля
+                try:
+                    trunk_volume_min = int(data[i]['vehicle_info']['configuration']['trunk_volume_min'])
+                except:
+                    trunk_volume_min = 0
+
+                # Марка автомобиля
+                try:
+                    mark_info = str(data[i]['vehicle_info']['mark_info']['name'])
+                    search_sting += f' {mark_info}'
+                except:
+                    mark_info = 'Not marka info'
+
+                # Марка автомобиля на русском
+                try:
+                    mark_info_ru = str(data[i]['vehicle_info']['mark_info']['ru_name'])
+                    search_sting += f' {mark_info_ru}'
+                except:
+                    mark_info_ru = 'Not marka info'
+
+                # Модель автомобиля
+                try:
+                    model_info = str(data[i]['vehicle_info']['model_info']['name'])
+                    search_sting += f' {model_info}'
+                except:
+                    model_info = 'Not model info'
+
+                # Модель автомобиля на русском
+                try:
+                    model_info_ru = str(data[i]['vehicle_info']['model_info']['ru_name'])
+                    search_sting += f' {model_info_ru}'
+                except:
+                    model_info_ru = 'Not model info'
+
+                # Технические характеристики
+                try:
+                    tech_human_name = str(data[i]['vehicle_info']['tech_param']['human_name'])
+                    # search_sting += f' {tech_human_name}'
+                except:
+                    tech_human_name = 'Not tech human name'
+
+                # Информация об автомобиле
+                # try:
+                #     lk_summary = str(data[i]['lk_summary'])
+                # except:
+                #     lk_summary = 'Not ik summary'
+
+                sale_id = str(data[i]['saleId'])
+
+                link_post = f'https://auto.ru/cars/used/sale/{sale_id}/'
+
+                i += 1
+
+                if sale_id in current_posts:
+                    continue
+
+                temp = Parsed_post(availability=availability,
+                                   color_hex=color_hex,
+                                   custom_cleared=custom_cleared,
+                                   license_plate=license_plate,
+                                   owners_number=owners_number,
+                                   pts=pts,
+                                   vin=vin,
+                                   vin_resolution=vin_resolution,
+                                   year=year,
+                                   price_rub=price_rub,
+                                   price_eur=price_eur,
+                                   price_usd=price_usd,
+                                   is_official=is_official,
+                                   seller_latitude=seller_latitude,
+                                   seller_longitude=seller_longitude,
+                                   region=region,
+                                   timezone=timezone,
+                                   mileage=mileage,
+                                   body_type=body_type,
+                                   doors_count=doors_count,
+                                   auto_class=auto_class,
+                                   conf_human_name=conf_human_name,
+                                   tech_human_name=tech_human_name,
+                                   trunk_volume_min=trunk_volume_min,
+                                   mark_info=mark_info,
+                                   mark_info_ru=mark_info_ru,
+                                   model_info=model_info,
+                                   model_info_ru=model_info_ru,
+                                   link_img=link_img,
+                                   link_post=link_post,
+                                   sale_id=sale_id,
+                                   search_string=search_sting,
+                                   color_text=color_text)
+
+                result = add_row('autoru', temp)
         except KeyboardInterrupt:
             break
+        except TypeError:
+            print(f'Не удалось спарсить страницу №{pages}')
+            # pages += 1
+            continue
         except:
             print(f'Не удалось спарсить страницу №{pages}')
-            pages += 1
+            # pages += 1
             continue
-
+        finally:
+            pages += 1
         # with open('parse2.json', 'w', encoding='UTF-8') as file:
         #     file.write(str(data))
 
-        i = 0  # Переменная для перехода по объявлениям
-        while i <= len(data) - 1:  # len(data)-1 это количество пришедших объявлений
-            search_sting = ''
 
 
-            # Доступность объявления
-            try:
-                availability = str(data[i]['availability'])
-            except:
-                availability = 'Not availability'
-
-            # Категория автомобиля
-            try:
-                category = str(data[i]['category'])
-            except:
-                category = 'Not category'
-
-            # Цвет автомобиля
-            try:
-                color_hex = str(data[i]["color_hex"])
-                color_rgb = tuple(int(color_hex[i:i + 2], 16) for i in (0, 2, 4))
-                color_text = get_colour_name(color_rgb)
-                try:
-                    color_text = colors_list[color_text]
-                    search_sting += color_text
-                except:
-                    pass
-            except:
-                color_hex = 'Not color'
-
-
-            # Описание автомобиля
-            # try:
-            #     description = str(data[i]['description'])
-            # except:
-            #     description = 'Not description'
-
-            # Растаможен ли автомобиль (возвращает True или False)
-            try:
-                custom_cleared = bool(data[i]['documents']['custom_cleared'])
-            except:
-                custom_cleared = False
-
-            # Лицензия на автомобиль
-            try:
-                license_plate = str(data[i]['documents']['license_plate'])
-            except:
-                license_plate = 'Not license plate '
-
-            # Колличество владельцев автомобиля
-            try:
-                owners_number = int(data[i]['documents']['owners_number'])
-            except:
-                owners_number = 0
-
-            # PTS автомобиля
-            try:
-                pts = str(data[i]['documents']['pts'])
-            except:
-                pts = 'Not PTS'
-
-            # VIN автомобиля
-            try:
-                vin = str(data[i]['documents']['vin'])
-            except:
-                vin = 'Not VIN'
-
-            try:
-                vin_resolution = str(data[i]['documents']['vin_resolution'])
-            except:
-                vin_resolution = 'Not vin resolution '
-
-            # Год выпуска автомобиля
-            try:
-                year = int(data[i]['documents']['year'])
-                search_sting += f' {str(year)}'
-            except:
-                year = 0
-
-            # Цена в рублях, евро и долларах
-            try:
-                price_rub = int(data[i]['price_info']['RUR'])
-            except:
-                price_rub = 0
-
-            try:
-                price_eur = int(data[i]['price_info']['EUR'])
-            except:
-                price_eur = 0
-
-            try:
-                price_usd = int(data[i]['price_info']['USD'])
-            except:
-                price_usd = 0
-
-            # С салона ли машина или нет
-            try:
-                is_official = bool(data[i]['salon']['is_official'])
-                if is_official:
-                    search_sting += ' с салона'
-            except:
-                is_official = False
-
-            # Координаты места нахождения машины (возвращается долгота и широта)
-            try:
-                seller_latitude = float(data[i]['seller']['location']['coord']['latitude'])
-                seller_longitude = float(data[i]['seller']['location']['coord']['longitude'])
-            except:
-                seller_latitude = 0
-                seller_longitude = 0
-
-            # Регион, в котором находится автомобиль
-            try:
-                region = str(data[i]['seller']['location']['region_info']['name'])
-                search_sting += f' {region}'
-            except:
-                region = 'Not region'
-
-            # Временная зона в которой находится автомобиль
-            try:
-                timezone = str(data[i]['seller']['location']['timezone_info']['abbr'])
-            except:
-                timezone = 'Not timezone'
-
-            # Пробег автомобиля
-            try:
-                mileage = int(data[i]['state']['mileage'])
-            except:
-                mileage = 0
-
-            # Картинки автомобиля
-            # Возвращается несколько фото, мы их добавляем в словарь img_url
-            img_url = []
-            for img in data[i]['state']['image_urls']:
-                img_url.append(img['sizes']['1200x900'])
-            link_img = str(img_url)
-
-            # Тип автомобиля
-            try:
-                body_type = str(data[i]['vehicle_info']['configuration']['body_type'])
-            except:
-                body_type = 'Not body_type auto'
-
-            # Количество дверей у автомобиля
-            try:
-                doors_count = int(data[i]['vehicle_info']['configuration']['doors_count'])
-            except:
-                doors_count = 0
-
-            # Класс автомобиля
-            try:
-                auto_class = str(data[i]['vehicle_info']['configuration']['auto_class'])
-            except:
-                auto_class = 'Not class auto'
-
-            # Название автомобиля
-            try:
-                conf_human_name = str(data[i]['vehicle_info']['configuration']['human_name'])
-                search_sting += f' {conf_human_name}'
-            except:
-                conf_human_name = 'Not name auto'
-
-            # Объем багажника автомобиля
-            try:
-                trunk_volume_min = int(data[i]['vehicle_info']['configuration']['trunk_volume_min'])
-            except:
-                trunk_volume_min = 0
-
-            # Марка автомобиля
-            try:
-                mark_info = str(data[i]['vehicle_info']['mark_info']['name'])
-                search_sting += f' {mark_info}'
-            except:
-                mark_info = 'Not marka info'
-
-            # Марка автомобиля на русском
-            try:
-                mark_info_ru = str(data[i]['vehicle_info']['mark_info']['ru_name'])
-                search_sting += f' {mark_info_ru}'
-            except:
-                mark_info_ru = 'Not marka info'
-
-            # Модель автомобиля
-            try:
-                model_info = str(data[i]['vehicle_info']['model_info']['name'])
-                search_sting += f' {model_info}'
-            except:
-                model_info = 'Not model info'
-
-            # Модель автомобиля на русском
-            try:
-                model_info_ru = str(data[i]['vehicle_info']['model_info']['ru_name'])
-                search_sting += f' {model_info_ru}'
-            except:
-                model_info_ru = 'Not model info'
-
-            # Технические характеристики
-            try:
-                tech_human_name = str(data[i]['vehicle_info']['tech_param']['human_name'])
-                # search_sting += f' {tech_human_name}'
-            except:
-                tech_human_name = 'Not tech human name'
-
-            # Информация об автомобиле
-            # try:
-            #     lk_summary = str(data[i]['lk_summary'])
-            # except:
-            #     lk_summary = 'Not ik summary'
-
-            sale_id = str(data[i]['saleId'])
-
-            link_post = f'https://auto.ru/cars/used/sale/{sale_id}/'
-
-            i += 1
-
-            if sale_id in current_posts:
-                continue
-
-            temp = Parsed_post(availability=availability,
-                               color_hex=color_hex,
-                               custom_cleared=custom_cleared,
-                               license_plate=license_plate,
-                               owners_number=owners_number,
-                               pts=pts,
-                               vin=vin,
-                               vin_resolution=vin_resolution,
-                               year=year,
-                               price_rub=price_rub,
-                               price_eur=price_eur,
-                               price_usd=price_usd,
-                               is_official=is_official,
-                               seller_latitude=seller_latitude,
-                               seller_longitude=seller_longitude,
-                               region=region,
-                               timezone=timezone,
-                               mileage=mileage,
-                               body_type=body_type,
-                               doors_count=doors_count,
-                               auto_class=auto_class,
-                               conf_human_name=conf_human_name,
-                               tech_human_name=tech_human_name,
-                               trunk_volume_min=trunk_volume_min,
-                               mark_info=mark_info,
-                               mark_info_ru=mark_info_ru,
-                               model_info=model_info,
-                               model_info_ru=model_info_ru,
-                               link_img=link_img,
-                               link_post=link_post,
-                               sale_id=sale_id,
-                               search_string=search_sting,
-                               color_text=color_text)
-
-            result = add_row('autoru', temp)
-
-        pages += 1
+        # pages += 1
 
     return True
 
